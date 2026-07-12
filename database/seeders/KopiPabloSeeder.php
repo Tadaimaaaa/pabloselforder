@@ -37,12 +37,12 @@ class KopiPabloSeeder extends Seeder
         ]);
 
         // Bersihkan tabel categories & products untuk mengganti dengan Menu Resmi 100%
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
         DB::table('order_details')->truncate();
         DB::table('orders')->truncate();
         DB::table('products')->truncate();
         DB::table('categories')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         // 2. Seed Kategori Resmi Toko Kopi Pablo
         $categories = [
