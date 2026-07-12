@@ -18,8 +18,11 @@ class CustomerController extends Controller
      */
     public function landing()
     {
-        $categories = Category::where('is_active', true)->orderBy('order')->get();
-        $favorites = Product::where('is_available', true)->where('is_featured', true)->with('category')->get();
+        $categories = Category::where('is_active', true)->where('slug', '!=', 'adds-on')->orderBy('order')->get();
+        $favorites = Product::where('is_available', true)
+            ->where('is_featured', true)
+            ->whereHas('category', fn($q) => $q->where('slug', '!=', 'adds-on'))
+            ->with('category')->get();
         $storeSettings = [
             'name' => Setting::get('store_name', 'Kopi Pablo'),
             'tagline' => Setting::get('store_tagline', 'Crafted Coffee, Self-Service Ordering Experience'),
@@ -39,7 +42,7 @@ class CustomerController extends Controller
      */
     public function menu(Request $request)
     {
-        $categories = Category::where('is_active', true)->orderBy('order')->get();
+        $categories = Category::where('is_active', true)->where('slug', '!=', 'adds-on')->orderBy('order')->get();
         
         $query = Product::where('is_available', true)->with('category');
 
@@ -47,6 +50,11 @@ class CustomerController extends Controller
         if ($request->filled('category') && $request->category !== 'all') {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
+            });
+        } else {
+            // Sembunyikan Add Ons dari daftar menu utama
+            $query->whereHas('category', function ($q) {
+                $q->where('slug', '!=', 'adds-on');
             });
         }
 
@@ -192,7 +200,13 @@ class CustomerController extends Controller
             $cartTotal += $item['price'] * $item['quantity'];
         }
 
-        return view('customer.checkout', compact('cart', 'cartTotal'));
+        $addOns = Product::where('is_available', true)
+            ->whereHas('category', function ($q) {
+                $q->where('slug', 'adds-on');
+            })
+            ->get();
+
+        return view('customer.checkout', compact('cart', 'cartTotal', 'addOns'));
     }
 
     /**

@@ -46,7 +46,7 @@
                         Nomor HP / WhatsApp <span class="text-rose-500">*</span>
                     </label>
                     <input type="text" name="customer_phone" id="customer_phone" required
-                           value="{{ old('customer_phone', Auth::user()->email ?? '08123456789') }}"
+                           value="{{ old('customer_phone', '') }}"
                            placeholder="08xxxxxxxxxx"
                            class="w-full bg-[#F6F0E1]/50 border border-[#D8D6CF] rounded-xl px-3.5 py-2.5 text-xs text-[#24352A] focus:outline-none focus:border-[#34543D]">
                 </div>
@@ -98,6 +98,42 @@
                         <i class="fa-solid fa-qrcode text-lg"></i>
                     </div>
                 </div>
+            </label>
+        </div>
+
+        <!-- ADDS ON / TOPPING TAMBAHAN EKSKLUSIF CHECKOUT -->
+        @if(isset($addOns) && $addOns->isNotEmpty())
+        <div class="bg-white rounded-[20px] p-5 border border-[#D8D6CF] card-shadow space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-extrabold text-[#58725A] uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-[#34543D]"></i> Tambah Topping / Add Ons
+                </h2>
+                <span class="text-[10px] text-[#6E756D] font-bold bg-[#F6F0E1] px-2.5 py-1 rounded-full">Khusus Checkout</span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @foreach($addOns as $addon)
+                    <div class="flex items-center justify-between p-3 rounded-xl border border-[#D8D6CF]/70 bg-[#F6F0E1]/30 hover:border-[#34543D] transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <img src="{{ Str::startsWith($addon->image, ['http://', 'https://']) ? $addon->image : asset(ltrim($addon->image, '/')) }}" 
+                                 alt="{{ $addon->name }}" 
+                                 class="w-11 h-11 rounded-lg object-cover shrink-0">
+                            <div class="min-w-0">
+                                <h3 class="text-xs font-bold text-[#24352A] truncate">{{ $addon->name }}</h3>
+                                <span class="text-[11px] font-extrabold text-[#34543D] block">+{{ $addon->formatted_price }}</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="addAddonToCart({{ $addon->id }})"
+                                class="shrink-0 bg-[#34543D] hover:bg-[#24352A] text-white text-[11px] font-black px-3 py-2 rounded-lg shadow transition active:scale-95 flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus text-[9px]"></i>
+                            <span>Tambah</span>
+                        </button>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         </div>
 
         <!-- RIGHT COLUMN: RINGKASAN & TOMBOL BAYAR (lg:col-span-5 sticky) -->
@@ -159,4 +195,32 @@
     </div>
     </form>
 </div>
+
+<script>
+function addAddonToCart(productId) {
+    fetch('{{ route("cart.add") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1,
+            notes: 'Topping Add-On'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        location.reload();
+    });
+}
+</script>
 @endsection
