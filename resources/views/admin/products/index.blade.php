@@ -37,7 +37,7 @@
                     @foreach($products as $product)
                         <tr class="hover:bg-[#F6F0E1]/30 transition">
                             <td class="p-4 flex items-center gap-3">
-                                <img src="{{ $product->image }}" alt="" class="w-12 h-12 rounded-xl object-cover bg-[#F6F0E1]">
+                                <img src="{{ Str::startsWith($product->image, ['http://', 'https://']) ? $product->image : asset(ltrim($product->image, '/')) }}" alt="" class="w-12 h-12 rounded-xl object-cover bg-[#F6F0E1]">
                                 <div>
                                     <span class="font-bold text-sm text-[#24352A] block">{{ $product->name }}</span>
                                     <span class="text-[11px] text-[#6E756D] line-clamp-1 max-w-xs">{{ $product->description }}</span>

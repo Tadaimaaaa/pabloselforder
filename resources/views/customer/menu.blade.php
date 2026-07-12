@@ -58,7 +58,7 @@
                     <div class="bg-white rounded-[24px] p-4 border border-[#D8D6CF]/80 shadow-xs hover:-translate-y-1 hover:shadow-xl hover:border-[#34543D] transition-all duration-300 flex sm:flex-col gap-4 items-center sm:items-stretch group overflow-hidden">
                         <!-- Foto Produk -->
                         <div class="relative shrink-0 overflow-hidden rounded-[18px]">
-                            <img src="{{ $product->image }}" alt="{{ $product->name }}" 
+                            <img src="{{ Str::startsWith($product->image, ['http://', 'https://']) ? $product->image : asset(ltrim($product->image, '/')) }}" alt="{{ $product->name }}" 
                                  class="w-24 h-24 sm:w-full sm:h-48 object-cover bg-[#F6F0E1] group-hover:scale-105 transition-transform duration-500 ease-out">
                             @if($product->is_favorite)
                                 <span class="absolute top-2.5 left-2.5 bg-[#34543D]/95 backdrop-blur-md text-white text-[9px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
