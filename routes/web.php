@@ -31,31 +31,29 @@ Route::post('/register', [CustomerAuthController::class, 'processRegister'])->na
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
 // ==========================================
-// 3. ALUR PEMESANAN CUSTOMER (WAJIB LOGIN / TERDAFTAR)
+// 3. ALUR PEMESANAN CUSTOMER (SELF-SERVICE TANPA LOGIN)
 // ==========================================
-Route::middleware('auth')->group(function () {
-    // Halaman Menu & Produk
-    Route::get('/menu', [CustomerController::class, 'menu'])->name('menu');
+// Halaman Menu & Produk
+Route::get('/menu', [CustomerController::class, 'menu'])->name('menu');
 
-    // Keranjang Belanja
-    Route::get('/cart', [CustomerController::class, 'cart'])->name('cart');
-    Route::post('/cart/add', [CustomerController::class, 'addToCart'])->name('cart.add');
-    Route::post('/cart/update', [CustomerController::class, 'updateCart'])->name('cart.update');
-    Route::post('/cart/clear', [CustomerController::class, 'clearCart'])->name('cart.clear');
+// Keranjang Belanja
+Route::get('/cart', [CustomerController::class, 'cart'])->name('cart');
+Route::post('/cart/add', [CustomerController::class, 'addToCart'])->name('cart.add');
+Route::post('/cart/update', [CustomerController::class, 'updateCart'])->name('cart.update');
+Route::post('/cart/clear', [CustomerController::class, 'clearCart'])->name('cart.clear');
 
-    // Halaman Checkout & Pembayaran QR
-    Route::get('/checkout', [CustomerController::class, 'checkout'])->name('checkout');
-    Route::post('/checkout', [CustomerController::class, 'processCheckout'])->name('checkout.process');
+// Halaman Checkout & Pembayaran QR
+Route::get('/checkout', [CustomerController::class, 'checkout'])->name('checkout');
+Route::post('/checkout', [CustomerController::class, 'processCheckout'])->name('checkout.process');
 
-    // Halaman Pembayaran QRIS / QR Code Pembayaran
-    Route::get('/payment/{orderNumber}', [CustomerController::class, 'paymentQr'])->name('checkout.payment');
-    Route::post('/payment/{orderNumber}/confirm', [CustomerController::class, 'confirmPayment'])->name('checkout.payment.confirm');
+// Halaman Pembayaran QRIS / QR Code Pembayaran
+Route::get('/payment/{orderNumber}', [CustomerController::class, 'paymentQr'])->name('checkout.payment');
+Route::post('/payment/{orderNumber}/confirm', [CustomerController::class, 'confirmPayment'])->name('checkout.payment.confirm');
 
-    // Tiket QR Pengambilan Pesanan & Status
-    Route::get('/order/{orderNumber}', [CustomerController::class, 'orderStatus'])->name('order.status');
-    Route::get('/order/{orderNumber}/check-status', [CustomerController::class, 'checkOrderStatus'])->name('order.check_status');
-    Route::get('/orders', [CustomerController::class, 'orders'])->name('orders');
-});
+// Tiket QR Pengambilan Pesanan & Status
+Route::get('/order/{orderNumber}', [CustomerController::class, 'orderStatus'])->name('order.status');
+Route::get('/order/{orderNumber}/check-status', [CustomerController::class, 'checkOrderStatus'])->name('order.check_status');
+Route::get('/orders', [CustomerController::class, 'orders'])->name('orders');
 
 // ==========================================
 // 4. BACK-OFFICE ADMIN

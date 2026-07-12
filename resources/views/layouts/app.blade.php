@@ -115,20 +115,14 @@
                             {{ $headerCartCount }}
                         </span>
                     </a>
-                @endif
 
-                @auth
                     <a href="{{ route('orders') }}" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {{ request()->routeIs('orders*') ? 'bg-[#34543D] text-white shadow-sm' : 'text-[#24352A] hover:bg-[#D8D6CF]/40' }}" title="Riwayat Pesanan Saya">
                         <i class="fa-solid fa-clock-rotate-left"></i>
                         <span class="hidden sm:inline">Riwayat</span>
                     </a>
+                @endif
 
-                    <!-- Nama Customer Pill -->
-                    <span class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 border border-[#D8D6CF] text-xs font-extrabold text-[#24352A] shadow-2xs">
-                        <i class="fa-solid fa-circle-user text-[#34543D] text-sm"></i>
-                        <span>{{ Str::limit(Auth::user()->name, 14) }}</span>
-                    </span>
-
+                @auth
                     <form action="{{ route('logout') }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" class="px-3 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition flex items-center gap-1.5" title="Keluar">
@@ -136,13 +130,6 @@
                             <span class="hidden md:inline">Keluar</span>
                         </button>
                     </form>
-                @else
-                    <a href="{{ route('login') }}" class="px-3.5 py-2 rounded-xl text-xs font-bold text-[#34543D] bg-white border border-[#D8D6CF] hover:bg-[#F6F0E1] transition">
-                        Masuk
-                    </a>
-                    <a href="{{ route('register') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#34543D] hover:bg-[#24352A] shadow-sm transition">
-                        Daftar
-                    </a>
                 @endauth
             </div>
         </div>

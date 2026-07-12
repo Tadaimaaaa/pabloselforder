@@ -264,7 +264,6 @@ class CustomerController extends Controller
     {
         $order = Order::with('items')
             ->where('order_number', $orderNumber)
-            ->where('user_id', auth()->id())
             ->firstOrFail();
 
         return view('customer.payment', compact('order'));
@@ -276,7 +275,6 @@ class CustomerController extends Controller
     public function confirmPayment($orderNumber)
     {
         $order = Order::where('order_number', $orderNumber)
-            ->where('user_id', auth()->id())
             ->firstOrFail();
         
         // Tandai pesanan diproses
@@ -293,7 +291,6 @@ class CustomerController extends Controller
     {
         $order = Order::with('items')
             ->where('order_number', $orderNumber)
-            ->where('user_id', auth()->id())
             ->firstOrFail();
 
         return view('customer.order-status', compact('order'));
@@ -320,11 +317,18 @@ class CustomerController extends Controller
      */
     public function orders()
     {
-        // Strictly hanya ambil pesanan milik akun customer yang sedang login
-        $orders = Order::with('items')
-            ->where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+        if (auth()->check()) {
+            $orders = Order::with('items')
+                ->where('user_id', auth()->id())
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $myOrders = session()->get('my_orders', []);
+            $orders = Order::with('items')
+                ->whereIn('order_number', $myOrders)
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         return view('customer.orders', compact('orders'));
     }
