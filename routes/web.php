@@ -56,6 +56,24 @@ Route::get('/order/{orderNumber}/check-status', [CustomerController::class, 'che
 Route::post('/order/{orderNumber}/reschedule', [CustomerController::class, 'reschedulePickup'])->name('order.reschedule');
 Route::get('/orders', [CustomerController::class, 'orders'])->name('orders');
 
+// Endpoint Khusus Pembaruan Database & Cache di Hosting (Railway/Cloud)
+Route::get('/system-setup-db', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Migrasi database dan pembersihan cache berhasil dijalankan di server Railway!',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
 // ==========================================
 // 4. BACK-OFFICE ADMIN
 // ==========================================
