@@ -14,5 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, $request) {
+            return redirect()->back()->withInput($request->except('_token'))->with('error', 'Sesi keamanan halaman telah diperbarui. Silakan coba tekan tombol atau kirim ulang pesanan Anda.');
+        });
     })->create();

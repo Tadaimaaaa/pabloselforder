@@ -219,6 +219,8 @@ class CustomerController extends Controller
             'customer_phone' => 'required|string|max:20',
             'table_number' => 'required|string|max:255',
             'notes' => 'nullable|string|max:500',
+            'pickup_option' => 'nullable|string',
+            'pickup_time' => 'nullable|string|max:100',
         ]);
 
         $cart = session()->get('cart', []);
@@ -230,6 +232,11 @@ class CustomerController extends Controller
         $subtotal = 0;
         foreach ($cart as $item) {
             $subtotal += $item['price'] * $item['quantity'];
+        }
+
+        $pickupTime = 'Secepatnya (Ambil Sekarang)';
+        if ($request->pickup_option === 'scheduled' && $request->filled('pickup_time')) {
+            $pickupTime = $request->pickup_time;
         }
 
         $orderNumber = 'PABLO-' . date('Ymd') . '-' . strtoupper(Str::random(4));
@@ -245,6 +252,7 @@ class CustomerController extends Controller
             'status' => 'menunggu', // Status awal: Menunggu Konfirmasi Kasir
             'total_amount' => $subtotal,
             'payment_method' => 'qris',
+            'pickup_time' => $pickupTime,
         ]);
 
         foreach ($cart as $item) {
@@ -356,5 +364,60 @@ class CustomerController extends Controller
         $order = Order::with('items')->where('order_number', $orderNumber)->firstOrFail();
 
         return view('customer.ticket-verify', compact('order'));
+    }
+
+    /**
+     * Pengajuan/Perubahan Jadwal Pengambilan Pesanan (Reschedule Pickup - UCD Kopi Pablo).
+     */
+    public function reschedulePickup($orderNumber, Request $request)
+    {
+        $request->validate([
+            'reschedule_time' => 'required|string|max:100',
+            'reschedule_notes' => 'nullable|string|max:255',
+        ]);
+
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+
+        // 1. Jika pesanan sudah selesai atau dibatalkan
+        if (in_array(strtolower($order->status), ['selesai', 'dibatalkan'])) {
+            return redirect()->back()->with('error', 'Pesanan ini sudah selesai atau dibatalkan sehingga jadwal tidak dapat diubah.');
+        }
+
+        $newTime = $request->reschedule_time;
+        $notes = $request->reschedule_notes;
+
+        // 2. Jika status MENUNGGU: langsung update jadwal & otomatis disetujui
+        if ($order->status === 'menunggu') {
+            $order->update([
+                'pickup_time' => $newTime,
+                'reschedule_status' => 'acknowledged',
+                'reschedule_notes' => $notes ?: 'Diubah langsung oleh customer saat pesanan masih menunggu konfirmasi.',
+            ]);
+
+            return redirect()->back()->with('success', 'Waktu pengambilan berhasil diperbarui menjadi: ' . $newTime);
+        }
+
+        // 3. Jika status DIPROSES: ajukan perubahan (requested) dengan notifikasi/alert ke Barista
+        if ($order->status === 'diproses') {
+            $order->update([
+                'pickup_time' => $newTime,
+                'reschedule_status' => 'requested',
+                'reschedule_notes' => $notes ?: 'Pengajuan reschedule saat pesanan sedang disiapkan barista.',
+            ]);
+
+            return redirect()->back()->with('warning_reschedule', 'Permintaan perubahan waktu ke "' . $newTime . '" telah dikirimkan ke counter. Barista akan menyesuaikan racikan agar minuman tetap segar saat Anda datang.');
+        }
+
+        // 4. Jika status SIAP DIAMBIL: hanya info keterlambatan (Late Pickup Note)
+        if ($order->status === 'siap_diambil') {
+            $order->update([
+                'reschedule_status' => 'late_notice',
+                'reschedule_notes' => 'Info Keterlambatan (' . $newTime . '): ' . ($notes ?: 'Mohon simpan pesanan di counter/kulkas.'),
+            ]);
+
+            return redirect()->back()->with('success', 'Informasi waktu pengambilan/keterlambatan (' . $newTime . ') telah disampaikan ke counter Barista!');
+        }
+
+        return redirect()->back();
     }
 }

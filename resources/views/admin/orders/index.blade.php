@@ -40,17 +40,44 @@
                 <div class="bg-white rounded-[20px] p-5 border border-[#D8D6CF] shadow-sm space-y-4">
                     <!-- Top header -->
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#D8D6CF]/60 pb-3">
-                        <div class="flex items-center space-x-3">
+                        <div class="flex flex-wrap items-center gap-2">
                             <span class="font-extrabold text-sm text-[#24352A]">{{ $order->order_number }}</span>
                             <span class="px-3 py-1 rounded-full text-[10px] font-extrabold
                                 {{ $order->status === 'selesai' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'dibatalkan' ? 'bg-rose-100 text-rose-800' : 'bg-[#F6F0E1] text-[#34543D]') }}">
                                 {{ strtoupper($order->status) }}
+                            </span>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-extrabold bg-[#34543D] text-white flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-clock text-[9px]"></i>
+                                <span>Ambil: {{ $order->pickup_time ?: 'Secepatnya' }}</span>
                             </span>
                         </div>
                         <div class="text-xs text-[#6E756D]">
                             <i class="fa-solid fa-clock mr-1"></i> {{ $order->created_at->format('d M Y, H:i') }} WIB
                         </div>
                     </div>
+
+                    @if($order->reschedule_status === 'requested')
+                        <div class="bg-amber-100 border border-amber-300 text-amber-900 p-3 rounded-xl text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm"></i>
+                                <span>⚠️ Permintaan Reschedule Customer: <strong>{{ $order->pickup_time }}</strong> ({{ $order->reschedule_notes }})</span>
+                            </div>
+                            <span class="bg-amber-600 text-white text-[10px] px-2.5 py-1 rounded-full uppercase shrink-0">Harap Sesuaikan Racikan</span>
+                        </div>
+                    @elseif($order->reschedule_status === 'late_notice')
+                        <div class="bg-blue-100 border border-blue-300 text-blue-900 p-3 rounded-xl text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-bell text-blue-600 text-sm"></i>
+                                <span>ℹ️ Info Keterlambatan Customer: <strong>{{ $order->pickup_time }}</strong> ({{ $order->reschedule_notes }})</span>
+                            </div>
+                            <span class="bg-blue-600 text-white text-[10px] px-2.5 py-1 rounded-full uppercase shrink-0">Simpan di Counter</span>
+                        </div>
+                    @elseif($order->reschedule_status === 'acknowledged' && $order->reschedule_notes)
+                        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-2.5 rounded-xl text-xs flex items-center space-x-2">
+                            <i class="fa-solid fa-check-circle text-emerald-600"></i>
+                            <span>🕒 Jadwal Diperbarui: <strong>{{ $order->pickup_time }}</strong> ({{ $order->reschedule_notes }})</span>
+                        </div>
+                    @endif
 
                     <!-- Customer & Table -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">

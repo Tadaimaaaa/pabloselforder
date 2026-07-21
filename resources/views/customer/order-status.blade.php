@@ -23,6 +23,28 @@
         </button>
     </div>
 
+    <!-- FLASH MESSAGES -->
+    @if(session('success'))
+        <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 p-4 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-sm">
+            <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if(session('warning_reschedule'))
+        <div class="bg-amber-50 border border-amber-300 text-amber-900 p-4 rounded-2xl text-xs font-bold flex items-start gap-2.5 shadow-sm">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base mt-0.5"></i>
+            <span>{{ session('warning_reschedule') }}</span>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-rose-50 border border-rose-300 text-rose-800 p-4 rounded-2xl text-xs font-bold flex items-center gap-2.5 shadow-sm">
+            <i class="fa-solid fa-circle-xmark text-rose-600 text-base"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+
     <!-- QR CODE & BARCODE PENGAMBILAN PESANAN (LANGKAH 7 ALUR CUSTOMER) -->
     <div class="bg-gradient-to-b from-[#34543D] to-[#24352A] text-white rounded-[24px] p-6 text-center shadow-xl space-y-4 border border-[#7A9478]/30">
         <div class="inline-flex items-center gap-2 bg-[#58725A]/80 text-[#F6F0E1] text-[10px] font-extrabold px-3.5 py-1 rounded-full uppercase tracking-wider">
@@ -46,6 +68,14 @@
                 <span class="font-mono text-sm md:text-base font-black tracking-widest block text-[#F6F0E1]">{{ $order->order_number }}</span>
                 <span class="text-[9px] text-[#D8D6CF] uppercase tracking-wider block">OUTLET: {{ Str::limit($order->table_number, 40) }} | ATAS NAMA: {{ strtoupper($order->customer_name) }}</span>
             </div>
+        </div>
+
+        <!-- TOMBOL DOWNLOAD TIKET QR -->
+        <div class="pt-3">
+            <button type="button" onclick="downloadTicketQR()" class="px-5 py-3 rounded-2xl bg-[#F6F0E1] hover:bg-white text-[#24352A] font-extrabold text-xs shadow-lg transition active:scale-95 inline-flex items-center gap-2 border border-[#D8D6CF]/60">
+                <i class="fa-solid fa-download text-sm text-[#34543D]"></i>
+                <span>Download Tiket QR (PNG)</span>
+            </button>
         </div>
     </div>
 
@@ -97,6 +127,42 @@
                 @php $index++; @endphp
             @endforeach
         </div>
+    </div>
+
+    <!-- JADWAL PENGAMBILAN & RESCHEDULE CARD (UCD FEATURE) -->
+    <div class="bg-white rounded-[24px] p-6 border-2 border-[#34543D] card-shadow flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start space-x-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-[#F6F0E1] text-[#34543D] flex items-center justify-center font-bold shrink-0 mt-0.5">
+                <i class="fa-solid fa-clock text-lg"></i>
+            </div>
+            <div>
+                <span class="text-[10px] font-extrabold text-[#58725A] uppercase tracking-wider block">WAKTU PENGAMBILAN PESANAN</span>
+                <h3 class="text-base font-extrabold text-[#24352A] mt-0.5">{{ $order->pickup_time ?: 'Secepatnya (Ambil Sekarang)' }}</h3>
+                @if($order->reschedule_status === 'requested')
+                    <span class="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1.5">
+                        <i class="fa-solid fa-hourglass-half mr-1"></i> Menunggu penyesuaian dari Barista
+                    </span>
+                @elseif($order->reschedule_status === 'acknowledged')
+                    <span class="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1.5">
+                        <i class="fa-solid fa-check mr-1"></i> Jadwal diperbarui
+                    </span>
+                @elseif($order->reschedule_status === 'late_notice')
+                    <span class="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1.5">
+                        <i class="fa-solid fa-bell mr-1"></i> Info keterlambatan disampaikan
+                    </span>
+                @endif
+                @if($order->reschedule_notes)
+                    <p class="text-xs text-[#6E756D] italic mt-1">Catatan: "{{ $order->reschedule_notes }}"</p>
+                @endif
+            </div>
+        </div>
+
+        @if(!in_array(strtolower($order->status), ['selesai', 'dibatalkan']))
+            <button type="button" onclick="openRescheduleModal()" class="px-4 py-3 rounded-xl bg-[#34543D] hover:bg-[#24352A] text-white text-xs font-extrabold shadow-md transition flex items-center justify-center gap-2 shrink-0">
+                <i class="fa-solid fa-calendar-alt"></i>
+                <span>Ubah Waktu Pengambilan</span>
+            </button>
+        @endif
     </div>
 
     <!-- DETAIL CUSTOMER & OUTLET -->
@@ -156,6 +222,80 @@
         </a>
     </div>
 
+</div>
+
+<!-- MODAL RESCHEDULE PENGAMBILAN (UCD FEATURE) -->
+<div id="rescheduleModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-[24px] max-w-md w-full p-6 shadow-2xl border border-[#D8D6CF] space-y-5">
+        <div class="flex items-center justify-between border-b border-[#D8D6CF]/60 pb-3.5">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-[#F6F0E1] text-[#34543D] flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-[#24352A]">Ubah Waktu Pengambilan</h3>
+                    <p class="text-[10px] text-[#6E756D]">Sesuaikan jadwal kehadiran Anda di outlet</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRescheduleModal()" class="w-8 h-8 rounded-lg bg-[#F6F0E1] text-[#6E756D] hover:text-[#24352A] flex items-center justify-center text-xs font-bold transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        @if($order->status === 'diproses')
+            <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3.5 rounded-xl text-xs flex items-start space-x-2.5">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
+                <div>
+                    <span class="font-extrabold block">Barista Sedang Menyiapkan Pesanan!</span>
+                    <span class="text-[11px] leading-relaxed">Mengubah waktu terlalu lama dapat memengaruhi suhu/kesegaran minuman. Permintaan ini akan dikirim ke counter untuk disesuaikan.</span>
+                </div>
+            </div>
+        @elseif($order->status === 'siap_diambil')
+            <div class="bg-blue-50 border border-blue-200 text-blue-800 p-3.5 rounded-xl text-xs flex items-start space-x-2.5">
+                <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 shrink-0"></i>
+                <div>
+                    <span class="font-extrabold block">Pesanan Sudah Siap di Counter!</span>
+                    <span class="text-[11px] leading-relaxed">Anda dapat mengirimkan info perkiraan kedatangan (keterlambatan) agar pesanan disimpan dengan aman di kulkas/counter.</span>
+                </div>
+            </div>
+        @endif
+
+        <form action="{{ route('order.reschedule', ['orderNumber' => $order->order_number]) }}" method="POST" class="space-y-4">
+            @csrf
+            <div>
+                <label for="reschedule_time" class="block text-xs font-extrabold text-[#24352A] mb-1.5">
+                    Pilih Waktu / Jam Pengambilan Baru <span class="text-rose-500">*</span>
+                </label>
+                <select name="reschedule_time" id="reschedule_time" required class="w-full bg-[#F6F0E1]/60 border border-[#D8D6CF] rounded-xl px-3.5 py-2.5 text-xs text-[#24352A] font-bold focus:outline-none focus:border-[#34543D]">
+                    <option value="15 Menit Lagi (+15m)">🕒 +15 Menit dari sekarang</option>
+                    <option value="30 Menit Lagi (+30m)">🕒 +30 Menit dari sekarang</option>
+                    <option value="1 Jam Lagi (+1 Jam)">🕒 +1 Jam dari sekarang</option>
+                    <option value="Pukul 12:00 WIB">Pukul 12:00 WIB</option>
+                    <option value="Pukul 14:00 WIB">Pukul 14:00 WIB</option>
+                    <option value="Pukul 16:00 WIB">Pukul 16:00 WIB</option>
+                    <option value="Pukul 17:30 WIB (Pulang Kerja/Kuliah)">Pukul 17:30 WIB (Pulang Kerja/Kuliah)</option>
+                    <option value="Pukul 19:00 WIB (Malam)">Pukul 19:00 WIB (Malam)</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="reschedule_notes" class="block text-xs font-extrabold text-[#24352A] mb-1.5">
+                    Catatan / Alasan (Opsional)
+                </label>
+                <input type="text" name="reschedule_notes" id="reschedule_notes" placeholder="Contoh: Terjebak macet / hujan deras di jalan..." class="w-full bg-[#F6F0E1]/60 border border-[#D8D6CF] rounded-xl px-3.5 py-2.5 text-xs text-[#24352A] focus:outline-none focus:border-[#34543D]">
+            </div>
+
+            <div class="flex items-center justify-end space-x-2.5 pt-2 border-t border-[#D8D6CF]/60">
+                <button type="button" onclick="closeRescheduleModal()" class="px-4 py-2.5 rounded-xl bg-[#F6F0E1] text-[#6E756D] hover:text-[#24352A] text-xs font-bold transition">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#34543D] hover:bg-[#24352A] text-white text-xs font-extrabold shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Konfirmasi Perubahan</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- CEK OTOMATIS STATUS PESANAN (REAL-TIME POLLING) -->
@@ -231,5 +371,100 @@
                 .catch(err => console.error("Error checking order status:", err));
         }, 3000);
     });
+
+    function openRescheduleModal() {
+        const modal = document.getElementById('rescheduleModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeRescheduleModal() {
+        const modal = document.getElementById('rescheduleModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function downloadTicketQR() {
+        const qrEl = document.querySelector('#qrcodeBox canvas') || document.querySelector('#qrcodeBox img');
+        if (!qrEl) {
+            alert("QR Code sedang dimuat, silakan coba beberapa detik lagi.");
+            return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = 450;
+        const height = 620;
+        canvas.width = width;
+        canvas.height = height;
+
+        // Background utama dark green
+        ctx.fillStyle = '#24352A';
+        ctx.fillRect(0, 0, width, height);
+
+        // Header strip
+        ctx.fillStyle = '#34543D';
+        ctx.fillRect(0, 0, width, 110);
+
+        // Judul Header
+        ctx.fillStyle = '#F6F0E1';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('KOPI PABLO', width / 2, 45);
+
+        ctx.fillStyle = '#D8D6CF';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('TIKET PENGAMBILAN PESANAN (PWA)', width / 2, 72);
+
+        // Garis pemisah header
+        ctx.strokeStyle = '#58725A';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(30, 110);
+        ctx.lineTo(width - 30, 110);
+        ctx.stroke();
+
+        // Kotak putih QR Code
+        const qrBoxSize = 250;
+        const qrBoxX = (width - qrBoxSize) / 2;
+        const qrBoxY = 140;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(qrBoxX - 15, qrBoxY - 15, qrBoxSize + 30, qrBoxSize + 30);
+
+        // Gambar QR Code dari qrcodeBox
+        ctx.drawImage(qrEl, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
+
+        // Order Number Box di Bawah QR
+        ctx.fillStyle = '#F6F0E1';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText('{{ $order->order_number }}', width / 2, 455);
+
+        // Nama Pemesan & Waktu Pengambilan
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText('ATAS NAMA: {{ strtoupper($order->customer_name) }}', width / 2, 495);
+
+        ctx.fillStyle = '#D8D6CF';
+        ctx.font = '13px sans-serif';
+        ctx.fillText('JADWAL: {{ strtoupper($order->pickup_time ?: "SECEPATNYA") }}', width / 2, 525);
+
+        // Outlet
+        ctx.fillStyle = '#A8BBAA';
+        ctx.font = 'italic 11px sans-serif';
+        ctx.fillText('{{ Str::limit($order->table_number, 55) }}', width / 2, 560);
+
+        // Footer info
+        ctx.fillStyle = '#7A9478';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('Tunjukkan gambar tiket ini kepada Barista saat pengambilan', width / 2, 595);
+
+        // Trigger download PNG
+        const link = document.createElement('a');
+        link.download = 'Tiket_KopiPablo_{{ $order->order_number }}.png';
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 </script>
 @endpush

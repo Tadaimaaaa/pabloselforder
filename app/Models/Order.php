@@ -20,6 +20,9 @@ class Order extends Model
         'status',
         'total_amount',
         'payment_method',
+        'pickup_time',
+        'reschedule_status',
+        'reschedule_notes',
     ];
 
     protected $casts = [

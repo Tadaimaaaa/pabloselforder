@@ -53,6 +53,7 @@ Route::post('/payment/{orderNumber}/confirm', [CustomerController::class, 'confi
 // Tiket QR Pengambilan Pesanan & Status
 Route::get('/order/{orderNumber}', [CustomerController::class, 'orderStatus'])->name('order.status');
 Route::get('/order/{orderNumber}/check-status', [CustomerController::class, 'checkOrderStatus'])->name('order.check_status');
+Route::post('/order/{orderNumber}/reschedule', [CustomerController::class, 'reschedulePickup'])->name('order.reschedule');
 Route::get('/orders', [CustomerController::class, 'orders'])->name('orders');
 
 // ==========================================

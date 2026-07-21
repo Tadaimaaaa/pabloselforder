@@ -79,6 +79,50 @@
             </div>
         </div>
 
+        <!-- JADWAL PENGAMBILAN PESANAN (UCD FEATURE) -->
+        <div class="bg-white rounded-[20px] p-5 border border-[#D8D6CF] card-shadow space-y-4">
+            <h2 class="text-xs font-extrabold text-[#58725A] uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-clock"></i> Jadwal Pengambilan Pesanan
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label id="labelInstant" onclick="togglePickupTime(false)" class="border-2 border-[#34543D] bg-[#F6F0E1]/60 rounded-2xl p-3.5 cursor-pointer flex items-center space-x-3 transition hover:border-[#34543D]">
+                    <input type="radio" name="pickup_option" value="instant" checked class="text-[#34543D] focus:ring-[#34543D] w-4 h-4">
+                    <div>
+                        <span class="font-extrabold text-xs text-[#24352A] block">⚡ Secepatnya</span>
+                        <span class="text-[10px] text-[#6E756D]">Langsung disiapkan sekarang</span>
+                    </div>
+                </label>
+
+                <label id="labelScheduled" onclick="togglePickupTime(true)" class="border-2 border-[#D8D6CF] bg-white rounded-2xl p-3.5 cursor-pointer flex items-center space-x-3 transition hover:border-[#34543D]">
+                    <input type="radio" name="pickup_option" value="scheduled" class="text-[#34543D] focus:ring-[#34543D] w-4 h-4">
+                    <div>
+                        <span class="font-extrabold text-xs text-[#24352A] block">🕒 Jadwalkan Waktu</span>
+                        <span class="text-[10px] text-[#6E756D]">Takeaway / Pre-Order nanti</span>
+                    </div>
+                </label>
+            </div>
+
+            <div id="scheduledTimeContainer" class="hidden pt-2 border-t border-[#D8D6CF]/60 space-y-2">
+                <label for="pickup_time" class="block text-xs font-bold text-[#24352A]">
+                    Pilih Waktu Pengambilan (Hari Ini):
+                </label>
+                <select name="pickup_time" id="pickup_time" class="w-full bg-[#F6F0E1]/50 border border-[#D8D6CF] rounded-xl px-3.5 py-2.5 text-xs text-[#24352A] font-bold focus:outline-none focus:border-[#34543D]">
+                    <option value="15 Menit Lagi (+15m)">🕒 +15 Menit dari sekarang</option>
+                    <option value="30 Menit Lagi (+30m)">🕒 +30 Menit dari sekarang</option>
+                    <option value="1 Jam Lagi (+1 Jam)">🕒 +1 Jam dari sekarang</option>
+                    <option value="Pukul 12:00 WIB">Pukul 12:00 WIB</option>
+                    <option value="Pukul 14:00 WIB">Pukul 14:00 WIB</option>
+                    <option value="Pukul 16:00 WIB">Pukul 16:00 WIB</option>
+                    <option value="Pukul 17:30 WIB (Pulang Kerja/Kuliah)">Pukul 17:30 WIB (Pulang Kerja/Kuliah)</option>
+                    <option value="Pukul 19:00 WIB (Malam)">Pukul 19:00 WIB (Malam)</option>
+                </select>
+                <p class="text-[10px] text-[#6E756D] italic">
+                    *Barista akan menyesuaikan waktu pembuatan racikan minuman agar tetap segar saat Anda datang.
+                </p>
+            </div>
+        </div>
+
         <!-- METODE PEMBAYARAN QR (QRIS KOPI PABLO) -->
         <div class="bg-white rounded-[20px] p-5 border border-[#D8D6CF] card-shadow space-y-4">
             <h2 class="text-xs font-extrabold text-[#58725A] uppercase tracking-wider flex items-center gap-2">
@@ -197,6 +241,21 @@
 </div>
 
 <script>
+function togglePickupTime(show) {
+    const container = document.getElementById('scheduledTimeContainer');
+    const labelInstant = document.getElementById('labelInstant');
+    const labelScheduled = document.getElementById('labelScheduled');
+    if (show) {
+        container.classList.remove('hidden');
+        labelScheduled.className = 'border-2 border-[#34543D] bg-[#F6F0E1]/60 rounded-2xl p-3.5 cursor-pointer flex items-center space-x-3 transition hover:border-[#34543D]';
+        labelInstant.className = 'border-2 border-[#D8D6CF] bg-white rounded-2xl p-3.5 cursor-pointer flex items-center space-x-3 transition hover:border-[#34543D]';
+    } else {
+        container.classList.add('hidden');
+        labelInstant.className = 'border-2 border-[#34543D] bg-[#F6F0E1]/60 rounded-2xl p-3.5 cursor-pointer flex items-center space-x-3 transition hover:border-[#34543D]';
+        labelScheduled.className = 'border-2 border-[#D8D6CF] bg-white rounded-2xl p-3.5 cursor-pointer flex items-center space-x-3 transition hover:border-[#34543D]';
+    }
+}
+
 function addAddonToCart(productId) {
     fetch('{{ route("cart.add") }}', {
         method: 'POST',
